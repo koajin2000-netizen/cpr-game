@@ -1,0 +1,510 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>CPR 영웅 훈련소</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 한 화면에 카드 하나. 위쪽에 5단계 진행 표시, 아래에 지금 단계의 게임 카드. 밝은 하늘색 바탕에 심장 빨강을 포인트로 사용 */
+:root{
+  --bg:#F3F9FF; --card:#FFFFFF; --ink:#1F2D3D; --muted:#586C80; --line:#D9E7F5;
+  --heart:#D92B4B; --heart-soft:#FFE8EC;
+  --sky:#2C7FE8; --sky-soft:#E4F1FF;
+  --ok:#14976C; --ok-soft:#DCF5EA;
+  --warn:#B25E00; --warn-soft:#FFF1D6;
+  --font-display:'Jua','Noto Sans KR',system-ui,sans-serif;
+  --font-body:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6;padding-inline:16px;padding-block:16px 40px}
+.wrap{max-width:720px;margin-inline:auto;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--font-display);font-weight:400;margin:0;text-wrap:balance;line-height:1.3}
+h1{font-size:1.6rem}
+h2{font-size:1.4rem}
+p{margin:0}
+header{display:flex;flex-direction:column;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo{width:38px;height:38px;border-radius:12px;background:var(--heart);color:#fff;display:grid;place-items:center;font-size:20px}
+#prog{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+#prog li{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.78rem;color:var(--muted)}
+#prog b{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid var(--line);font-weight:700;font-size:.9rem}
+#prog li.now{color:var(--heart);font-weight:700}
+#prog li.now b{background:var(--heart);border-color:var(--heart);color:#fff}
+#prog li.done b{background:var(--ok);border-color:var(--ok);color:#fff}
+#prog li.done b::before{content:"✓"}
+#prog li.done b{font-size:0}
+#prog li.done b::before{font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:16px;box-shadow:0 6px 24px rgba(44,127,232,.08)}
+.scene{background:var(--sky-soft);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;color:#17406F}
+.scene small{font-size:.72rem;letter-spacing:.08em;font-weight:700;color:var(--sky)}
+.help{color:var(--muted);font-size:.95rem}
+.btn{font:inherit;font-weight:700;border:0;border-radius:14px;padding:13px 20px;cursor:pointer;font-size:1.05rem;min-height:48px}
+.btn.primary{background:var(--heart);color:#fff}
+.btn.primary:hover{background:#BE2240}
+.btn.ghost{background:var(--sky-soft);color:#17406F}
+.btn.link{background:none;color:var(--muted);text-decoration:underline;font-weight:500;font-size:.9rem}
+.btn:disabled{opacity:.5;cursor:default}
+button:focus-visible,.drag:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.fb{min-height:0;border-radius:12px;padding:0 14px;font-weight:500}
+.fb.ok{background:var(--ok-soft);color:#0B5E43;padding:10px 14px}
+.fb.no{background:var(--warn-soft);color:var(--warn);padding:10px 14px}
+.result{border-top:2px dashed var(--line);padding-top:16px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.stars{font-size:1.9rem;color:#F5A623;letter-spacing:.1em;line-height:1}
+/* 순서 맞추기 */
+.slots,.pool{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.slot{display:flex;gap:10px;align-items:center;min-height:54px;border:2px dashed var(--line);border-radius:14px;padding:8px 12px;color:#9FB1C4;font-size:.92rem}
+.slot .n{width:28px;height:28px;border-radius:50%;background:var(--sky-soft);color:var(--sky);font-weight:700;display:grid;place-items:center;flex:none}
+.slot.filled{border-style:solid;border-color:var(--ok);background:var(--ok-soft);color:var(--ink)}
+.slot.filled .n{background:var(--ok);color:#fff}
+.stepcard{display:flex;gap:12px;align-items:center;width:100%;text-align:left;font:inherit;background:#fff;border:2px solid var(--line);border-radius:14px;padding:10px 14px;cursor:pointer;min-height:54px}
+.stepcard:hover{border-color:var(--sky)}
+.stepcard .ic{font-size:1.6rem;flex:none}
+.stepcard.pulse{border-color:var(--heart);animation:pulse 1s infinite}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes pulse{50%{box-shadow:0 0 0 6px var(--heart-soft)}}
+/* 드래그 */
+.chestbox{width:100%;max-width:340px;margin-inline:auto}
+.chest{width:100%;height:auto;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+.drag{cursor:grab;touch-action:none}
+.drag:active{cursor:grabbing}
+.chest text{font-family:var(--font-body);font-size:12px;fill:#35597F;font-weight:700}
+/* 객관식 */
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.opt{font:inherit;font-weight:700;font-size:1.3rem;background:#fff;border:2px solid var(--line);border-radius:16px;padding:16px 10px;cursor:pointer;min-height:64px;color:var(--ink)}
+.opt.long{font-size:1rem;text-align:left;font-weight:500}
+.opts.col{grid-template-columns:1fr}
+.opt:hover:not(:disabled){border-color:var(--sky)}
+.opt.ok{background:var(--ok-soft);border-color:var(--ok);color:#0B5E43}
+.opt.no{background:var(--warn-soft);border-color:#E9B35A;color:var(--warn)}
+.opt:disabled{cursor:default}
+.ruler{width:100%;max-width:420px;height:auto}
+.ruler text{font-family:var(--font-body);font-size:11px;fill:#35597F}
+/* 리듬 */
+.cvwrap{width:min(100%,360px);margin-inline:auto;display:flex;flex-direction:column;gap:12px}
+canvas{width:100%;height:auto;aspect-ratio:360/440;border-radius:18px;border:1px solid var(--line);background:#fff;display:block;touch-action:manipulation}
+.tap{font:inherit;font-weight:700;font-size:1.3rem;background:var(--heart);color:#fff;border:0;border-radius:20px;min-height:76px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:transform .05s}
+.tap:active,.tap.down{transform:scale(.96);background:#BE2240}
+.tap:disabled{opacity:.45}
+.stat{display:flex;justify-content:space-between;gap:8px;font-size:.92rem;color:var(--muted);flex-wrap:wrap}
+.stat b{color:var(--ink);font-variant-numeric:tabular-nums}
+/* AED */
+.aed{border:2px solid var(--ok);border-radius:18px;background:var(--ok-soft);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.aed-top{display:flex;align-items:center;gap:8px;color:#0B5E43;font-weight:700}
+.led{width:12px;height:12px;border-radius:50%;background:#9DB8AD}
+.led.on{background:#1DCB8B;box-shadow:0 0 0 4px rgba(29,203,139,.25)}
+.voice{background:#fff;border-radius:12px;padding:10px 12px;color:var(--ink);min-height:48px}
+.shock{font:inherit;font-weight:700;font-size:1.4rem;background:var(--heart);color:#fff;border:0;border-radius:50%;width:150px;height:150px;margin-inline:auto;cursor:pointer;animation:pulse 1s infinite}
+.flash{animation:flash .6s}
+@keyframes flash{0%{background:#FFF7B0}100%{background:var(--ok-soft)}}
+/* 시작·결과 */
+.mission{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.mission li{display:flex;gap:12px;align-items:center;background:var(--sky-soft);border-radius:12px;padding:10px 14px}
+.mission li b{background:#fff;color:var(--sky);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none}
+.big{font-family:var(--font-display);font-size:2.2rem;line-height:1.2}
+.recap{display:grid;gap:8px}
+.recap div{background:var(--sky-soft);border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.recap b{color:var(--heart)}
+.note{font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="logo" aria-hidden="true">♥</div><h1>CPR 영웅 훈련소</h1></div>
+    <ol id="prog" hidden></ol>
+  </header>
+  <main id="stage"></main>
+</div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const el=$('#stage');
+const names=['순서','위치','깊이','속도','AED'];
+const st={cur:-1,stars:[0,0,0,0,0]};
+let cleanup=null, ac=null;
+
+const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+const scene=t=>`<div class="scene"><small>지금 상황</small><span>${t}</span></div>`;
+const say=(node,cls,html)=>{node.className='fb '+cls;node.innerHTML=html};
+const rating=m=>m===0?3:m<=2?2:1;
+
+function renderProg(){
+  const p=$('#prog');
+  p.hidden=st.cur<0||st.cur>4;
+  p.innerHTML=names.map((n,i)=>`<li class="${i<st.cur?'done':i===st.cur?'now':''}"><b>${i+1}</b><span>${n}</span></li>`).join('');
+}
+function go(n){
+  if(cleanup){cleanup();cleanup=null}
+  st.cur=n;renderProg();el.innerHTML='';
+  [stage1,stage2,stage3,stage4,stage5,finalScreen][n]?.();
+  if(n===-1)startScreen();
+  window.scrollTo({top:0});
+}
+function finish(i,stars,msg,extra=''){
+  st.stars[i]=stars;
+  const box=document.createElement('div');
+  box.className='result';
+  box.innerHTML=`<div class="stars" aria-label="별 ${stars}개">${starStr(stars)}</div><p>${msg}</p>${extra}<button class="btn primary" id="next">${i===4?'결과 보기':'다음 단계로'}</button>`;
+  $('#card').appendChild(box);
+  $('#next').onclick=()=>go(i+1);
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function choices(box,opts,cb,cls=''){
+  box.className='opts '+cls;
+  box.innerHTML=opts.map((o,i)=>`<button class="opt ${cls?'long':''}" data-i="${i}">${o.t}</button>`).join('');
+  box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const o=opts[+b.dataset.i];
+    if(o.ok){b.classList.add('ok');box.querySelectorAll('.opt').forEach(x=>x.disabled=true);cb(true,o)}
+    else{b.classList.add('no');b.disabled=true;cb(false,o)}
+  });
+}
+/* ---- 드래그 도우미 ---- */
+function pt(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+function setPos(g,x,y){g._x=x;g._y=y;g.setAttribute('transform',`translate(${x} ${y})`)}
+function drag(svg,g,onEnd){
+  let off=null;
+  g.addEventListener('pointerdown',e=>{if(g._lock)return;g.setPointerCapture(e.pointerId);const p=pt(svg,e);off={x:p.x-g._x,y:p.y-g._y};e.preventDefault()});
+  g.addEventListener('pointermove',e=>{if(!off)return;const p=pt(svg,e);setPos(g,Math.max(10,Math.min(310,p.x-off.x)),Math.max(10,Math.min(390,p.y-off.y)))});
+  const end=()=>{if(!off)return;off=null;onEnd(g._x,g._y)};
+  g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end);
+}
+function chestSVG(inner){
+  return `<svg id="chest" class="chest" viewBox="0 0 320 400" role="img" aria-label="누워 있는 친구를 위에서 본 그림">
+  <circle cx="160" cy="26" r="20" fill="#CFE6FF" stroke="#8FBDF0" stroke-width="3"/>
+  <path d="M70 50 Q160 22 250 50 L292 130 L278 322 L42 322 L28 130 Z" fill="#CFE6FF" stroke="#8FBDF0" stroke-width="3"/>
+  <path d="M160 74 Q112 68 80 90 M160 74 Q208 68 240 90" stroke="#8FBDF0" fill="none" stroke-width="4" stroke-linecap="round"/>
+  <path d="M150 120 Q110 122 88 146 M150 160 Q108 164 84 190 M150 200 Q112 206 90 232 M170 120 Q210 122 232 146 M170 160 Q212 164 236 190 M170 200 Q208 206 230 232" stroke="#B3D3F5" fill="none" stroke-width="3" stroke-linecap="round"/>
+  <rect id="stern" x="152" y="70" width="16" height="180" rx="8" fill="#fff" stroke="#8FBDF0" stroke-width="2"/>
+  <text x="178" y="86">← 가슴뼈</text>
+  <text x="178" y="266">명치(갈비뼈 끝)</text>
+  <line x1="150" y1="250" x2="170" y2="250" stroke="#8FBDF0" stroke-width="2"/>
+  ${inner}</svg>`;
+}
+
+/* ---- 시작 ---- */
+function startScreen(){
+  el.innerHTML=`<section class="card" id="card">
+  <div class="big">친구를 구하는<br>5단계 미션!</div>
+  <p>심폐소생술(CPR)은 심장이 멈춘 사람의 생명을 지키는 방법이에요. 게임으로 하나씩 연습해 봐요.</p>
+  <ul class="mission">
+   <li><b>1</b>해야 할 일 순서 맞추기</li>
+   <li><b>2</b>손을 어디에 올릴까? 위치 찾기</li>
+   <li><b>3</b>얼마나 깊이 누를까? 깊이 고르기</li>
+   <li><b>4</b>얼마나 빠르게? 박자 맞추기</li>
+   <li><b>5</b>AED(자동심장충격기) 사용하기</li>
+  </ul>
+  <button class="btn primary" id="go">훈련 시작!</button>
+  <p class="note">연습용 게임이에요. 진짜 상황에서는 119 상담원 선생님이 알려주는 대로 해요. 소리를 켜면 박자 게임이 더 재밌어요.</p>
+  </section>`;
+  $('#go').onclick=()=>{
+    try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume&&ac.resume()}catch(e){}
+    go(0);
+  };
+}
+
+/* ---- 1단계: 순서 맞추기 ---- */
+function stage1(){
+  const steps=[
+   {i:'👋',t:'어깨를 톡톡 두드리며 “괜찮아요?” 하고 불러요'},
+   {i:'📞',t:'“119에 신고해 주세요! AED도 가져다 주세요!” 하고 크게 부탁해요'},
+   {i:'👀',t:'숨을 쉬는지 10초 안에 살펴봐요'},
+   {i:'💗',t:'가슴 한가운데를 세게, 빠르게 눌러요 (가슴압박)'},
+   {i:'⚡',t:'AED가 오면 켜고, 말해 주는 대로 따라 해요'}];
+  let order=steps.map((_,i)=>i);
+  do{order.sort(()=>Math.random()-.5)}while(order.every((v,i)=>v===i));
+  let next=0,miss=0;
+  el.innerHTML=`<section class="card" id="card">
+   ${scene('점심시간, 운동장에서 친구가 갑자기 쓰러졌어요. 불러도 대답이 없어요. 주변은 안전해요.')}
+   <h2>제일 먼저 뭘 해야 할까?</h2>
+   <p class="help">아래 카드를 <b>해야 할 순서대로</b> 하나씩 눌러 봐요.</p>
+   <ol class="slots" id="slots">${steps.map((_,i)=>`<li class="slot" id="s${i}"><span class="n">${i+1}</span><span>여기에 ${i+1}번째 카드가 들어가요</span></li>`).join('')}</ol>
+   <ul class="pool" id="pool">${order.map(i=>`<li><button class="stepcard" data-i="${i}"><span class="ic" aria-hidden="true">${steps[i].i}</span><span>${steps[i].t}</span></button></li>`).join('')}</ul>
+   <div class="fb" id="fb" aria-live="polite"></div>
+  </section>`;
+  const fb=$('#fb');
+  $('#pool').querySelectorAll('.stepcard').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;
+    if(i===next){
+      const s=$('#s'+next);s.classList.add('filled');
+      s.innerHTML=`<span class="n">${next+1}</span><span>${steps[i].i} ${steps[i].t}</span>`;
+      b.closest('li').remove();next++;
+      document.querySelectorAll('.stepcard.pulse').forEach(x=>x.classList.remove('pulse'));
+      if(next===steps.length){
+        say(fb,'ok','잘했어요! 순서를 모두 맞혔어요.');
+        finish(0,rating(miss),'인공호흡은 배운 사람이 할 수 있어요. 처음 배울 때는 <b>가슴압박</b>이 가장 중요해요!');
+      }else say(fb,'ok','맞아요! 다음은 뭘까요?');
+    }else{
+      miss++;b.classList.add('shake');setTimeout(()=>b.classList.remove('shake'),400);
+      say(fb,'no',miss>=2?'아직이에요. 반짝이는 카드가 지금 할 일이에요!':'앗, 그건 조금 뒤에 해요. 다시 골라 봐요.');
+      if(miss>=2){const c=$(`.stepcard[data-i="${next}"]`);c&&c.classList.add('pulse')}
+    }
+  });
+}
+
+/* ---- 2단계: 압박 위치 ---- */
+const HAND=`<g id="hand" class="drag" tabindex="0" role="img" aria-label="끌어서 옮기는 손 모양">
+  <rect x="-44" y="-76" width="88" height="112" fill="transparent"/>
+  <g opacity=".92" stroke="#D9A074" stroke-width="2">
+   <rect x="-26" y="-34" width="52" height="54" rx="14" fill="#FFD9B8"/>
+   <rect x="-26" y="-70" width="10" height="42" rx="5" fill="#FFD9B8"/>
+   <rect x="-13" y="-76" width="10" height="48" rx="5" fill="#FFD9B8"/>
+   <rect x="0" y="-76" width="10" height="48" rx="5" fill="#FFD9B8"/>
+   <rect x="13" y="-70" width="10" height="42" rx="5" fill="#FFD9B8"/>
+   <rect x="-44" y="-26" width="22" height="10" rx="5" fill="#FFD9B8" transform="rotate(-25 -30 -20)"/>
+  </g>
+  <circle cx="0" cy="10" r="7" fill="#D92B4B" stroke="#fff" stroke-width="2"/>
+</g>`;
+function stage2(){
+  el.innerHTML=`<section class="card" id="card">
+   ${scene('친구가 숨을 쉬지 않아요. 이제 가슴압박을 시작해요!')}
+   <h2>손을 어디에 올릴까?</h2>
+   <p class="help">손 모양을 끌어서 가슴 위에 올려요. <b>빨간 점</b>이 누르는 곳(손꿈치)이에요. 가슴뼈를 반으로 나눴을 때 어느 쪽일까요?</p>
+   <div class="chestbox">${chestSVG(`<rect id="zone" x="146" y="160" width="28" height="90" rx="10" fill="#14976C" opacity="0"/><text id="zt" x="190" y="210" opacity="0">아래쪽 절반</text>${HAND}`)}</div>
+   <div class="fb" id="fb" aria-live="polite"></div>
+   <div class="row"><button class="btn ghost" id="hint">힌트 보기</button></div>
+  </section>`;
+  const svg=$('#chest'),hand=$('#hand'),fb=$('#fb');
+  let tries=0,done=false;
+  setPos(hand,270,360);
+  const showZone=()=>{$('#zone').setAttribute('opacity','.4');$('#zt').setAttribute('opacity','1')};
+  $('#hint').onclick=showZone;
+  drag(svg,hand,(x,y)=>{
+    if(done)return;
+    tries++;
+    const dx=x,dy=y+10;
+    if(Math.abs(dx-160)<=22&&dy>=160&&dy<=250){
+      done=true;hand._lock=true;setPos(hand,160,195);showZone();$('#hint').hidden=true;
+      say(fb,'ok','딱 맞아요!');
+      finish(1,rating(tries-1),'가슴뼈(가슴 한가운데)의 <b>아래쪽 절반</b>이에요. 손꿈치를 겹쳐 올리고 팔을 쭉 펴서 눌러요.');
+    }else{
+      let m='손을 가슴뼈 위로 옮겨 봐요.';
+      if(dy>=330||dy<40)m='손을 친구 가슴 위로 옮겨 봐요.';
+      else if(Math.abs(dx-160)>22)m='가슴뼈 가운데에 놓아야 해요.';
+      else if(dy<160)m='조금 위쪽이에요. 가슴뼈의 <b>아래쪽 절반</b>으로 내려 봐요.';
+      else if(dy>250)m='너무 아래예요. 명치(갈비뼈 끝)보다 위에 놓아요.';
+      say(fb,'no',m);
+      if(tries>=2)showZone();
+    }
+  });
+}
+
+/* ---- 3단계: 압박 깊이 ---- */
+function stage3(){
+  el.innerHTML=`<section class="card" id="card">
+   ${scene('손 위치를 정확히 찾았어요. 이제 팔을 쭉 펴고 눌러 볼까요?')}
+   <h2>가슴을 몇 cm 깊이로 눌러야 할까?</h2>
+   <p class="help">알맞은 깊이를 골라 봐요.</p>
+   <div id="opts"></div>
+   <div class="fb" id="fb" aria-live="polite"></div>
+  </section>`;
+  let miss=0;const fb=$('#fb');
+  const bad={2:'너무 얕아요. 이렇게 누르면 피가 잘 돌지 않아요.',8:'너무 깊어요. 갈비뼈가 다칠 수 있어요.',10:'너무 깊어요. 갈비뼈가 다칠 수 있어요.'};
+  choices($('#opts'),[2,5,8,10].map(n=>({t:n+'cm',ok:n===5,n})),(ok,o)=>{
+    if(ok){
+      say(fb,'ok','정답이에요!');
+      finish(2,rating(miss),'어른은 약 <b>5cm</b> 깊이로 눌러요 (6cm는 넘지 않게). 누른 뒤에는 가슴이 원래대로 올라오게 손에 힘을 빼요.',
+      `<svg class="ruler" viewBox="0 0 240 60" aria-label="0에서 10센티미터 자, 5센티미터까지 표시"><rect x="10" y="14" width="220" height="22" rx="4" fill="#E4F1FF" stroke="#8FBDF0"/><rect x="10" y="14" width="110" height="22" rx="4" fill="#D92B4B"/>${Array.from({length:11},(_,i)=>`<line x1="${10+i*22}" y1="36" x2="${10+i*22}" y2="${i%5===0?46:42}" stroke="#35597F"/><text x="${10+i*22}" y="57" text-anchor="middle">${i}</text>`).join('')}<text x="65" y="30" text-anchor="middle" style="fill:#fff;font-weight:700">5cm</text></svg>`);
+    }else{miss++;say(fb,'no',bad[o.n])}
+  });
+}
+
+/* ---- 4단계: 리듬 게임 ---- */
+function stage4(){
+  const BPM=110,iv=60000/BPM,N=30,travel=1500,HIT=370,WIN=210,PASS=18;
+  el.innerHTML=`<section class="card" id="card">
+   ${scene('이제 빠르게 눌러요! 너무 느려도, 너무 빨라도 안 돼요.')}
+   <h2>박자에 맞춰 30번 눌러 봐요</h2>
+   <p class="help">하트가 아래 동그라미에 닿을 때 버튼을 눌러요. (키보드는 스페이스바) 압박 속도는 <b>1분에 100~120회</b>, 1초에 약 2번이에요. 노래 ‘아기 상어’ 박자와 비슷해요.</p>
+   <div class="cvwrap">
+    <canvas id="cv"></canvas>
+    <div class="stat"><span>압박 <b id="cnt">0</b>/${N}</span><span>완벽 <b id="pf">0</b></span><span>좋아요 <b id="gd">0</b></span><span>놓침 <b id="ms">0</b></span></div>
+    <button class="tap" id="tap" disabled>꾹! 누르기</button>
+    <button class="btn primary" id="start">시작하기</button>
+   </div>
+   <div id="res"></div>
+  </section>`;
+  const cv=$('#cv'),c=cv.getContext('2d'),dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.width=360*dpr;cv.height=440*dpr;c.scale(dpr,dpr);
+  let notes=[],running=false,t0=0,raf=0,pf=0,gd=0,ms=0,fx=null;
+  const heart=(x,y,r,fill)=>{c.fillStyle=fill;c.beginPath();c.arc(x,y,r,0,7);c.fill();c.fillStyle='#fff';c.font=`700 ${r}px 'Noto Sans KR'`;c.textAlign='center';c.textBaseline='middle';c.fillText('♥',x,y+1)};
+  function draw(now,flash){
+    c.clearRect(0,0,360,440);
+    const g=c.createLinearGradient(0,0,0,440);g.addColorStop(0,'#F3F9FF');g.addColorStop(1,'#E4F1FF');c.fillStyle=g;c.fillRect(0,0,360,440);
+    c.fillStyle='rgba(44,127,232,.12)';c.fillRect(120,0,120,440);
+    c.strokeStyle='rgba(217,43,75,.5)';c.lineWidth=4;c.beginPath();c.arc(180,HIT,32+(flash?4:0),0,7);c.stroke();
+    if(flash){c.fillStyle='rgba(217,43,75,.15)';c.fill()}
+    notes.forEach(n=>{
+      if(n.hit)return;
+      const y=HIT*(1-(n.t-now)/travel);
+      if(y>-30&&y<470&&!n.miss)heart(180,y,22,'#D92B4B');
+    });
+    if(fx&&performance.now()<fx.until){c.fillStyle=fx.color;c.font="700 22px 'Noto Sans KR'";c.textAlign='center';c.fillText(fx.text,180,HIT-60)}
+    if(!running){c.fillStyle='#35597F';c.font="700 16px 'Noto Sans KR'";c.textAlign='center';c.fillText(notes.length?'끝!':'시작하기를 누르면 박자가 나와요',180,200)}
+  }
+  draw(-9999);
+  const tick=(when,f,len,type)=>{if(!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.18,when);g.gain.exponentialRampToValueAtTime(.001,when+len);o.connect(g);g.connect(ac.destination);o.start(when);o.stop(when+len)}catch(e){}};
+  const upd=()=>{$('#pf').textContent=pf;$('#gd').textContent=gd;$('#ms').textContent=ms;$('#cnt').textContent=pf+gd+ms};
+  let flashUntil=0;
+  function loop(){
+    const now=performance.now()-t0;
+    notes.forEach(n=>{if(!n.hit&&!n.miss&&now>n.t+WIN){n.miss=true;ms++;fx={text:'놓쳤어요',color:'#B25E00',until:performance.now()+400};upd()}});
+    draw(now,performance.now()<flashUntil);
+    if(now>notes[N-1].t+500){end();return}
+    raf=requestAnimationFrame(loop);
+  }
+  function press(){
+    if(!running)return;
+    const now=performance.now()-t0;
+    tick(ac?ac.currentTime:0,300,.08,'triangle');
+    flashUntil=performance.now()+120;
+    let best=null;
+    notes.forEach(n=>{if(!n.hit&&!n.miss&&Math.abs(now-n.t)<WIN&&(!best||Math.abs(now-n.t)<Math.abs(now-best.t)))best=n});
+    if(!best){fx={text:'박자를 기다려요',color:'#586C80',until:performance.now()+400};return}
+    best.hit=true;const d=now-best.t;
+    if(Math.abs(d)<90){pf++;fx={text:'완벽!',color:'#14976C',until:performance.now()+400}}
+    else{gd++;fx={text:d<0?'좋아요 (조금 빨라요)':'좋아요 (조금 느려요)',color:'#2C7FE8',until:performance.now()+400}}
+    upd();
+  }
+  function end(){
+    running=false;$('#tap').disabled=true;$('#start').hidden=false;$('#start').textContent='다시 도전';
+    draw(1e9);
+    const hits=pf+gd,stars=hits>=26?3:hits>=PASS?2:hits>=10?1:0;
+    const box=$('#res');
+    if(hits>=PASS){
+      box.innerHTML='';
+      finish(3,stars,`30번 중 ${hits}번 박자에 맞췄어요! 이 속도(1분에 110번)가 가슴압박에 알맞아요.`);
+    }else{
+      box.innerHTML=`<div class="fb no">30번 중 ${hits}번 맞췄어요. ${PASS}번 이상이면 통과예요. 다시 도전해 봐요!</div><p><button class="btn link" id="skip">그냥 다음 단계로</button></p>`;
+      $('#skip').onclick=()=>{st.stars[3]=stars;go(4)};
+    }
+  }
+  $('#start').onclick=()=>{
+    try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume&&ac.resume()}catch(e){}
+    $('#res').innerHTML='';
+    notes=Array.from({length:N},(_,i)=>({t:i*iv,hit:false,miss:false}));
+    pf=gd=ms=0;fx=null;upd();
+    t0=performance.now()+2300;
+    if(ac)for(let i=0;i<N;i++)tick(ac.currentTime+2.3+i*iv/1000,880,.05,'sine');
+    running=true;$('#tap').disabled=false;$('#start').hidden=true;
+    cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  };
+  const tapBtn=$('#tap');
+  tapBtn.addEventListener('pointerdown',e=>{e.preventDefault();tapBtn.classList.add('down');press()});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>tapBtn.addEventListener(ev,()=>tapBtn.classList.remove('down')));
+  tapBtn.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')e.preventDefault()});
+  const key=e=>{if(e.code==='Space'&&running){e.preventDefault();if(!e.repeat)press()}};
+  window.addEventListener('keydown',key);
+  cleanup=()=>{running=false;cancelAnimationFrame(raf);window.removeEventListener('keydown',key)};
+}
+
+/* ---- 5단계: AED ---- */
+function stage5(){
+  el.innerHTML=`<section class="card" id="card">
+   ${scene('119에 신고한 친구가 AED(자동심장충격기)를 가지고 달려왔어요!')}
+   <div class="aed"><div class="aed-top"><span class="led" id="led"></span>AED</div><div class="voice" id="voice">(전원이 꺼져 있어요)</div></div>
+   <div id="area"></div>
+   <div class="fb" id="fb" aria-live="polite"></div>
+  </section>`;
+  let miss=0;
+  const area=$('#area'),fb=$('#fb');
+  const voice=t=>$('#voice').textContent='🔊 '+t;
+  const clearFb=()=>{fb.className='fb';fb.innerHTML=''};
+
+  function power(){
+    area.innerHTML=`<h2>AED가 도착했어요. 제일 먼저 뭘 할까?</h2><div id="o" style="margin-top:12px"></div>`;
+    choices($('#o'),[
+      {t:'전원 버튼을 눌러 AED를 켜요',ok:true},
+      {t:'패드부터 친구 가슴에 붙여요',why:'먼저 전원을 켜면 AED가 다음에 할 일을 말로 알려줘요.'},
+      {t:'AED가 스스로 켜질 때까지 기다려요',why:'AED는 우리가 전원을 켜야 시작해요.'}
+    ],(ok,o)=>{
+      if(ok){clearFb();$('#led').classList.add('on');voice('“패드를 붙이세요.”');setTimeout(pads,700)}
+      else{miss++;say(fb,'no',o.why)}
+    },'col');
+  }
+  function pads(){
+    clearFb();
+    area.innerHTML=`<h2>패드를 그림 자리에 붙여요</h2><p class="help">패드를 끌어서 점선 동그라미 위에 놓아요. 옷은 먼저 걷어요.</p>
+    <div class="chestbox">${chestSVG(`
+      <circle id="tA" cx="105" cy="115" r="30" fill="none" stroke="#D92B4B" stroke-width="3" stroke-dasharray="6 5"/><text x="105" y="162" text-anchor="middle">오른쪽 가슴 위</text>
+      <circle id="tB" cx="230" cy="238" r="30" fill="none" stroke="#D92B4B" stroke-width="3" stroke-dasharray="6 5"/><text x="230" y="285" text-anchor="middle">왼쪽 옆구리 아래</text>
+      <g id="pA" class="drag" tabindex="0" role="img" aria-label="패드 1"><rect x="-28" y="-34" width="56" height="68" fill="transparent"/><rect x="-22" y="-28" width="44" height="56" rx="10" fill="#fff" stroke="#D92B4B" stroke-width="3"/><text x="0" y="5" text-anchor="middle" style="fill:#D92B4B;font-size:16px">패드1</text></g>
+      <g id="pB" class="drag" tabindex="0" role="img" aria-label="패드 2"><rect x="-28" y="-34" width="56" height="68" fill="transparent"/><rect x="-22" y="-28" width="44" height="56" rx="10" fill="#fff" stroke="#D92B4B" stroke-width="3"/><text x="0" y="5" text-anchor="middle" style="fill:#D92B4B;font-size:16px">패드2</text></g>
+    `)}</div>`;
+    const svg=$('#chest');let placed=0;
+    const cfg=[{id:'pA',home:[75,362],tx:105,ty:115,name:'오른쪽 가슴 위'},{id:'pB',home:[245,362],tx:230,ty:238,name:'왼쪽 옆구리 아래'}];
+    cfg.forEach(p=>{
+      const g=$('#'+p.id);setPos(g,...p.home);
+      drag(svg,g,(x,y)=>{
+        if(Math.hypot(x-p.tx,y-p.ty)<42){
+          setPos(g,p.tx,p.ty);g._lock=true;placed++;
+          say(fb,'ok','잘 붙였어요!');
+          if(placed===2){voice('“분석 중입니다. 환자에게서 떨어지세요.”');setTimeout(clear,1200)}
+        }else{
+          miss++;setPos(g,...p.home);
+          say(fb,'no','그림에서 점선 동그라미를 찾아봐요. 이 패드는 가슴 위와 옆구리 아래에 하나씩 붙여요.');
+        }
+      });
+    });
+  }
+  function clear(){
+    clearFb();
+    area.innerHTML=`<h2>AED가 분석하고 있어요. 이때 우리는?</h2><div id="o" style="margin-top:12px"></div>`;
+    choices($('#o'),[
+      {t:'친구에게서 손을 떼고 “모두 떨어지세요!” 하고 크게 말해요',ok:true},
+      {t:'계속 가슴을 눌러요',why:'분석 중에 몸을 만지면 AED가 잘 분석하지 못해요.'},
+      {t:'친구 어깨를 잡고 흔들어요',why:'분석 중에는 아무도 친구 몸을 만지면 안 돼요.'}
+    ],(ok,o)=>{
+      if(ok){clearFb();voice('“충격이 필요합니다. 모두 떨어졌는지 확인하고 깜빡이는 버튼을 누르세요.”');setTimeout(shock,700)}
+      else{miss++;say(fb,'no',o.why)}
+    },'col');
+  }
+  function shock(){
+    area.innerHTML=`<h2>모두 떨어졌는지 둘러보고 버튼을 눌러요</h2><p style="margin-top:12px"><button class="shock" id="sh">충격<br>버튼</button></p>`;
+    $('#sh').onclick=()=>{
+      $('#sh').disabled=true;$('#sh').style.animation='none';
+      $('.aed').classList.add('flash');voice('“충격이 전달되었습니다.”');
+      setTimeout(after,1300);
+    };
+  }
+  function after(){
+    clearFb();
+    area.innerHTML=`<h2>충격을 줬어요. 그다음엔?</h2><div id="o" style="margin-top:12px"></div>`;
+    choices($('#o'),[
+      {t:'바로 가슴압박을 다시 시작해요',ok:true},
+      {t:'친구가 깨어날 때까지 가만히 지켜봐요',why:'멈추지 말고 바로 가슴압박을 이어가야 해요.'},
+      {t:'패드를 떼고 AED를 꺼요',why:'패드는 붙여 두고 AED가 알려주는 대로 해요.'}
+    ],(ok,o)=>{
+      if(ok){voice('“가슴압박을 시작하세요.”');say(fb,'ok','정답이에요!');
+        finish(4,rating(miss),'119 구급대가 올 때까지 가슴압박을 계속해요. AED는 2분쯤 뒤에 다시 분석해요. 친구를 구했어요!')}
+      else{miss++;say(fb,'no',o.why)}
+    },'col');
+  }
+  power();
+}
+
+/* ---- 결과 ---- */
+function finalScreen(){
+  const total=st.stars.reduce((a,b)=>a+b,0);
+  const rank=total>=13?'생명 지킴이 대장':total>=9?'생명 지킴이':'생명 지킴이 연습생';
+  el.innerHTML=`<section class="card" id="card">
+   <div class="stars" aria-label="총 ${total}점">${starStr(total>=13?3:total>=9?2:1)}</div>
+   <div class="big">${rank}</div>
+   <p>별 ${total}개를 모았어요! (최대 15개)</p>
+   <div class="recap">
+    <div><span>단계별 별</span><b>${st.stars.map((s,i)=>names[i]+' '+s).join(' · ')}</b></div>
+    <div><span>순서</span><b>확인 → 119·AED 부탁 → 숨 확인 → 압박 → AED</b></div>
+    <div><span>위치</span><b>가슴뼈 아래쪽 절반</b></div>
+    <div><span>깊이</span><b>약 5cm</b></div>
+    <div><span>속도</span><b>1분에 100~120회</b></div>
+   </div>
+   <button class="btn primary" id="again">처음부터 다시 하기</button>
+   <p class="note">진짜 상황에서는 119 상담원의 안내를 들으면서 침착하게 도와요. 학교에서 CPR 실습도 꼭 해 봐요.</p>
+  </section>`;
+  $('#again').onclick=()=>{st.stars=[0,0,0,0,0];go(0)};
+}
+
+go(-1);
+</script>
+
+</body></html>
